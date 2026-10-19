@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Travel</title>
+<meta name="theme-color" content="#2E5646" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15181B" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <label class="trip-pick"><span class="sr">Trip</span><select id="tripSel"></select></label>
+    <button class="sync" id="sync" type="button"><span class="dot"></span><span id="syncText">Loading</span></button>
+  </div>
+</header>
+<div class="update" id="update" hidden><span>A new version is ready.</span><button type="button" id="updateBtn">Reload</button></div>
+<main id="view"></main>
+<nav class="tabs" id="tabs">
+  <button type="button" data-tab="plan">Plan</button>
+  <button type="button" data-tab="info">Info</button>
+  <button type="button" data-tab="journal">Journal</button>
+</nav>
+
+<dialog id="viewer" class="sheet viewer"></dialog>
+<dialog id="editor" class="sheet"></dialog>
+
+<script src="vendor/supabase.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
