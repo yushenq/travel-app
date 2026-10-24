@@ -1,0 +1,9 @@
+{
+  // Cloudflare serves the files in public/ as a static site. No server code.
+  "name": "travel-app",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "single-page-application"
+  }
+}

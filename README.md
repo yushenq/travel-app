@@ -2,7 +2,7 @@
 
 Sheng's trip planner and travel journal. An installable web app (PWA) that works offline on Android.
 
-- **App**: plain HTML/JS in `public/`, no build step. Hosted on Cloudflare Pages (build output directory: `public`).
+- **App**: plain HTML/JS in `public/`, no build step. Hosted on Cloudflare Workers as static assets (see `wrangler.jsonc`, which points at `public`).
 - **Data**: Supabase project "Travel" (trips, days, items, entries, photos, plus a private `photos` storage bucket). Only emails listed in `allowed_users` can read or write.
 - **Offline**: `sw.js` caches the app; the last synced data and photo files live in IndexedDB. Journal entries and photos made offline queue up and upload when the phone has signal.
 
