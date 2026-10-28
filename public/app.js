@@ -187,10 +187,25 @@ function pickTrip() {
     const saved = lsGet('tripId');
     S.tripId = (trips.find(t => t.id === saved) || trips.find(t => t.status === 'travelling') || trips.find(t => t.status === 'planning') || trips[0] || {}).id || null;
   }
-  const sel = $('#tripSel');
-  sel.innerHTML = trips.map(t => `<option value="${t.id}" ${t.id === S.tripId ? 'selected' : ''}>${esc(t.title)}${t.dates_label ? ' · ' + esc(t.dates_label) : ''}</option>`).join('') || '<option>Travel</option>';
+  const cur = trips.find(t => t.id === S.tripId);
+  $('#tripTitle').textContent = cur ? cur.title : 'Travel';
+  $('#tripSub').textContent = cur ? (cur.dates_label || '') : '';
+  $('#tripBtn').disabled = !trips.length;
 }
-$('#tripSel').addEventListener('change', e => { S.tripId = e.target.value; lsSet('tripId', S.tripId); S.day = -1; S.jday = ''; S.jtag = ''; render(); });
+const TRIP_STATUS = { planning: 'Planning', travelling: 'On now', done: 'Done' };
+$('#tripBtn').addEventListener('click', () => {
+  const trips = S.snap?.trips || [];
+  const dlg = $('#tripMenu');
+  dlg.innerHTML = `<div class="tm"><div class="tm-h">Choose a trip</div>${trips.map(t => `<button type="button" class="tm-row" data-id="${t.id}" aria-current="${t.id === S.tripId}"><span class="tm-t">${esc(t.title)}</span><span class="tm-d">${esc(t.dates_label || '')}</span>${t.status ? `<span class="chip ${esc(t.status)}">${esc(TRIP_STATUS[t.status] || t.status)}</span>` : ''}</button>`).join('')}</div>`;
+  dlg.querySelectorAll('.tm-row').forEach(b => b.onclick = () => {
+    dlg.close();
+    if (b.dataset.id === S.tripId) return;
+    S.tripId = b.dataset.id; lsSet('tripId', S.tripId); S.day = -1; S.jday = ''; S.jtag = '';
+    pickTrip(); render();
+  });
+  dlg.onclick = e => { if (e.target === dlg) dlg.close(); };
+  dlg.showModal();
+});
 
 // ---------- Views ----------
 function render() {

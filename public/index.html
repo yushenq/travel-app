@@ -14,7 +14,7 @@
 <body>
 <header class="top">
   <div class="top-in">
-    <label class="trip-pick"><span class="sr">Trip</span><select id="tripSel"></select></label>
+    <button class="trip-pick" id="tripBtn" type="button" aria-haspopup="dialog"><span class="tp-title" id="tripTitle">Travel</span><span class="tp-sub" id="tripSub"></span></button>
     <button class="sync" id="sync" type="button"><span class="dot"></span><span id="syncText">Loading</span></button>
   </div>
 </header>
@@ -26,6 +26,7 @@
   <button type="button" data-tab="journal">Journal</button>
 </nav>
 
+<dialog id="tripMenu" class="sheet"></dialog>
 <dialog id="viewer" class="sheet viewer"></dialog>
 <dialog id="editor" class="sheet"></dialog>
 
