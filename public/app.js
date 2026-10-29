@@ -253,7 +253,7 @@ function renderPlan(v, t) {
     <div class="lede">${t.route_line ? `<div class="route">${t.route_line}</div>` : ''}<div class="meta">${esc([t.subtitle, t.dates_label].filter(Boolean).join(' · '))}</div></div>
     ${t.map ? `<div class="mapcard"><div id="maphost"></div>
       <div class="ctrl"><button class="round" id="prev" type="button" aria-label="Previous day">←</button>
-        <div class="cap" aria-live="polite"><div class="t" id="capT">All days</div><div class="s" id="capS"></div></div>
+        <div class="cap" aria-live="polite"><div class="t" id="capT">All days</div><div class="s" id="capS"></div><a class="gmap" id="gmap" target="_blank" rel="noopener" hidden>Open this day in Google Maps ↗</a></div>
         <button class="round" id="next" type="button" aria-label="Next day">→</button></div>
       <div class="legend">${rk.map((r, i) => `<span><i style="border-color:var(--r${i})"></i>${esc(regions[r].name)}</span>`).join('')}
         <span><i style="border-top-style:dashed;border-color:var(--ink-soft)"></i>Flight</span>
@@ -273,12 +273,25 @@ function renderPlan(v, t) {
     ${footer()}`;
 
   const rows = [...v.querySelectorAll('.day')];
+  // Real-road directions for a day: the day's ground legs (drive, boat, coach) as a Google Maps link.
+  const gmapsUrl = d => {
+    const P = t.map?.places || {};
+    const seq = [];
+    (d.route?.legs || []).filter(l => l[0] !== 'fly').forEach(l => l[1].forEach(k => { if (typeof k === 'string' && P[k] && seq[seq.length - 1] !== k) seq.push(k); }));
+    if (seq.length < 2) return '';
+    const a = seq[0], b = seq[seq.length - 1], ll = k => P[k][1] + ',' + P[k][0];
+    const mid = [...new Set(seq.slice(1, -1).filter(k => P[k][2] && k !== a && k !== b))].slice(0, 8);
+    return 'https://www.google.com/maps/dir/?api=1&origin=' + ll(a) + '&destination=' + ll(b)
+      + (mid.length ? '&waypoints=' + encodeURIComponent(mid.map(ll).join('|')) : '') + '&travelmode=driving';
+  };
   const paint = cur => {
     rows.forEach((r, j) => r.classList.toggle('sel', j === cur));
     if (!t.map) return;
-    const T = $('#capT'), Sx = $('#capS');
+    const T = $('#capT'), Sx = $('#capS'), G = $('#gmap');
     if (cur < 0) { T.textContent = 'All days'; Sx.textContent = `${days.length} days · tap a day or use the arrows`; }
     else { const d = days[cur]; T.textContent = (/^\d/.test(d.label) ? 'Day ' : '') + d.label + ' · ' + d.title; Sx.textContent = d.sleep && d.sleep !== '—' ? 'Sleep: ' + d.sleep : (d.detail || ''); }
+    const u = cur >= 0 ? gmapsUrl(days[cur]) : '';
+    G.hidden = !u; if (u) G.href = u;
   };
   if (t.map) {
     mapCtl = renderMap($('#maphost'), t.map, days, { onChange: c => { S.day = c; paint(c); } });
