@@ -255,6 +255,7 @@ function renderPlan(v, t) {
       <div class="ctrl"><button class="round" id="prev" type="button" aria-label="Previous day">←</button>
         <div class="cap" aria-live="polite"><div class="t" id="capT">All days</div><div class="s" id="capS"></div><a class="gmap" id="gmap" target="_blank" rel="noopener" hidden>Open this day in Google Maps ↗</a></div>
         <button class="round" id="next" type="button" aria-label="Next day">→</button></div>
+      <div class="pchips" id="pchips"></div>
       <div class="legend">${rk.map((r, i) => `<span><i style="border-color:var(--r${i})"></i>${esc(regions[r].name)}</span>`).join('')}
         <span><i style="border-top-style:dashed;border-color:var(--ink-soft)"></i>Flight</span>
         <span><i style="border-top-style:dotted;border-color:var(--ink)"></i>Boat / coach</span>
@@ -284,9 +285,33 @@ function renderPlan(v, t) {
     return 'https://www.google.com/maps/dir/?api=1&origin=' + ll(a) + '&destination=' + ll(b)
       + (mid.length ? '&waypoints=' + encodeURIComponent(mid.map(ll).join('|')) : '') + '&travelmode=driving';
   };
+  // Tap a place (on the map or in the chips) to read what it is, what you'll do there and what to know.
+  const info = t.map?.info || {};
+  const openPlace = key => {
+    const i = info[key]; if (!i) return;
+    const p = t.map.places?.[key];
+    const q = i.q ? encodeURIComponent(i.q) : (p ? p[1] + ',' + p[0] : '');
+    const dlg = $('#placeInfo');
+    dlg.innerHTML = `<div class="pi"><div class="pi-k">${esc(i.kind || '')}</div><h3>${esc(i.name)}</h3>
+      <p>${esc(i.what || '')}</p>
+      ${i.doIt ? `<h4>What you'll do</h4><p>${esc(i.doIt)}</p>` : ''}
+      ${(i.know || []).length ? `<h4>Good to know</h4><ul>${i.know.map(k => `<li>${esc(k)}</li>`).join('')}</ul>` : ''}
+      <div class="pi-actions">${q ? `<a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${q}">Open in Google Maps ↗</a>` : ''}<button class="btn primary" id="piClose" type="button">Close</button></div></div>`;
+    $('#piClose').onclick = () => dlg.close();
+    dlg.onclick = e => { if (e.target === dlg) dlg.close(); };
+    dlg.showModal();
+  };
+  const placeKeys = cur => {
+    const seen = new Set(), out = [];
+    (cur < 0 ? days : [days[cur]]).forEach(d => [].concat(...(d.route?.legs || []).map(l => l[1])).forEach(k => { if (typeof k === 'string' && info[k] && !seen.has(k)) { seen.add(k); out.push(k); } }));
+    return out;
+  };
   const paint = cur => {
     rows.forEach((r, j) => r.classList.toggle('sel', j === cur));
     if (!t.map) return;
+    const pc = $('#pchips');
+    pc.innerHTML = placeKeys(cur).map(k => `<button type="button" class="pchip" data-k="${esc(k)}">${esc(info[k].name)}</button>`).join('');
+    pc.querySelectorAll('.pchip').forEach(b => b.onclick = () => openPlace(b.dataset.k));
     const T = $('#capT'), Sx = $('#capS'), G = $('#gmap');
     if (cur < 0) { T.textContent = 'All days'; Sx.textContent = `${days.length} days · tap a day or use the arrows`; }
     else { const d = days[cur]; T.textContent = (/^\d/.test(d.label) ? 'Day ' : '') + d.label + ' · ' + d.title; Sx.textContent = d.sleep && d.sleep !== '—' ? 'Sleep: ' + d.sleep : (d.detail || ''); }
@@ -294,7 +319,7 @@ function renderPlan(v, t) {
     G.hidden = !u; if (u) G.href = u;
   };
   if (t.map) {
-    mapCtl = renderMap($('#maphost'), t.map, days, { onChange: c => { S.day = c; paint(c); } });
+    mapCtl = renderMap($('#maphost'), t.map, days, { onChange: c => { S.day = c; paint(c); }, onPlace: openPlace });
     $('#prev').onclick = () => mapCtl.select(S.day <= 0 ? (S.day < 0 ? days.length - 1 : -1) : S.day - 1);
     $('#next').onclick = () => mapCtl.select(S.day >= days.length - 1 ? -1 : S.day + 1);
     v.querySelectorAll('[data-ov]').forEach(cb => cb.addEventListener('change', () => mapCtl.setOverlay(cb.dataset.ov, cb.checked)));

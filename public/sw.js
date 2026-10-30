@@ -1,5 +1,5 @@
 // Offline cache for the app itself. Bump VERSION on every release so phones pick up the new files.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE = 'travel-shell-' + VERSION;
 const SHELL = [
   './', 'index.html', 'styles.css', 'app.js', 'db.js', 'map.js', 'config.js',

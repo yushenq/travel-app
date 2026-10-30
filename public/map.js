@@ -3,7 +3,7 @@
 const NS = 'http://www.w3.org/2000/svg';
 const mk = (tag, a, p) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
 
-export function renderMap(host, map, days, { onChange } = {}) {
+export function renderMap(host, map, days, { onChange, onPlace } = {}) {
   const [minLon, minLat, maxLon, maxLat] = map.bbox;
   const cos = Math.cos((map.latRef ?? (minLat + maxLat) / 2) * Math.PI / 180);
   const W = 580, k = W / ((maxLon - minLon) * cos), H = Math.round((maxLat - minLat) * k);
@@ -54,7 +54,12 @@ export function renderMap(host, map, days, { onChange } = {}) {
     const t = mk('text', { class: 'm-lbl' + (region != null ? ' r' + region : '') }, gL);
     t.appendChild(document.createTextNode(text));
     if (num) { const s = mk('tspan', { class: 'n' }, t); s.textContent = '  ' + num; }
-    labels.push({ c, t, x, y, side });
+    // A bigger invisible circle makes the dot easy to tap; places with an info card open it on tap.
+    const hit = mk('circle', { class: 'm-hit', cx: x, cy: y }, gL);
+    if (onPlace && typeof key === 'string' && map.info?.[key]) {
+      [hit, t].forEach(e => { e.classList.add('tap'); e.addEventListener('click', ev => { ev.stopPropagation(); onPlace(key); }); });
+    }
+    labels.push({ c, t, x, y, side, hit });
   }
 
   function buildLabels() {
@@ -78,6 +83,7 @@ export function renderMap(host, map, days, { onChange } = {}) {
     const u = 1 / ppu(), fs = 12 * u;
     labels.forEach(l => {
       l.c.setAttribute('r', (l.c.classList.contains('base') ? 4.5 : 4) * u);
+      l.hit.setAttribute('r', 15 * u);
       l.t.setAttribute('font-size', fs); l.t.setAttribute('stroke-width', 3.5 * u);
       let x = l.x, y = l.y + fs * 0.35, a = 'start';
       if (l.side === 'r') x += 8 * u;
